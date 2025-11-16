@@ -1,0 +1,259 @@
+\documentclass{article}
+\usepackage[T2A]{fontenc} % Кодировка шрифта для кириллицы
+\usepackage[russian]{babel}
+\usepackage{tcolorbox}
+\tcbuselibrary{listings, skins, breakable}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstset{
+    language=C++,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{teal},
+    numbers=left,
+    numberstyle=\tiny,
+    stepnumber=1,
+    numbersep=5pt,
+    frame=single,
+    breaklines=true,
+    columns=fullflexible,
+    tabsize=4,
+    showstringspaces=false
+}
+
+\begin{document}
+
+\section{Ассоциативные контейнеры C++}
+
+Ассоциативные контейнеры позволяют обращаться к данным по ключу, а не по индексу.  
+В стандартной библиотеке есть две основные группы:
+\begin{itemize}
+    \item упорядоченные контейнеры на базе сбалансированных деревьев поиска: \texttt{map}, \texttt{multimap}, \texttt{set}, \texttt{multiset};
+    \item неупорядоченные хеш-структуры: \texttt{unordered\_map}, \texttt{unordered\_set}.
+\end{itemize}
+
+\subsection{std::map}
+
+\texttt{std::map} --- отсортированный словарь (ключ--значение), основанный на красно-черном дереве.
+
+\textbf{Свойства:}
+\begin{itemize}
+    \item хранит пары \texttt{(ключ, значение)};
+    \item ключи уникальны;
+    \item элементы хранятся в отсортированном порядке (по умолчанию по \texttt{operator<} для ключа);
+    \item основные операции (поиск, вставка, удаление) работают за $O(\log n)$.
+\end{itemize}
+
+\textbf{Основные операции:}
+\begin{itemize}
+    \item \texttt{m[key]} --- доступ по ключу, при отсутствии ключа создает новый элемент со значением по умолчанию ($O(\log n)$);
+    \item \texttt{m[key] = value} --- вставка нового элемента или изменение существующего ($O(\log n)$);
+    \item \texttt{m.at(key)} --- доступ по ключу, при отсутствии ключа кидает исключение \texttt{std::out\_of\_range} ($O(\log n)$);
+    \item \texttt{m.insert(\{key, value\})} --- вставка, если ключа еще нет; если ключ уже существует, элемент не изменяется ($O(\log n)$);
+    \item \texttt{m.erase(key)} --- удаление по ключу ($O(\log n)$);
+    \item \texttt{m.find(key)} --- поиск по ключу, возвращает итератор или \texttt{m.end()} ($O(\log n)$);
+    \item \texttt{m.count(key)} --- возвращает 0 или 1 (ключи уникальны) ($O(\log n)$);
+    \item \texttt{m.lower\_bound(key)} --- итератор на первый элемент, \texttt{key <= элемент} ($O(\log n)$);
+    \item \texttt{m.upper\_bound(key)} --- итератор на первый элемент, \texttt{key < элемент} ($O(\log n)$).
+\end{itemize}
+
+\textbf{Пример: значение по одному и тому же ключу заменяется.}
+
+\begin{lstlisting}
+#include <map>
+#include <iostream>
+
+int main() {
+    std::map<std::string, int> m;
+
+    m["apple"] = 1;
+    m["apple"] = 2; // новое значение для того же ключа
+
+    std::cout << m["apple"]; // 2
+}
+\end{lstlisting}
+
+
+\subsection{std::multimap}
+
+\texttt{std::multimap} похож на \texttt{map}, но допускает несколько элементов
+с одинаковым ключом. Элементы также упорядочены.
+
+\textbf{Свойства:}
+\begin{itemize}
+    \item хранит пары \texttt{(ключ, значение)};
+    \item ключи не обязаны быть уникальными;
+    \item элементы хранятся в отсортированном порядке;
+    \item операции поиска/вставки/удаления работают за $O(\log n)$.
+\end{itemize}
+
+\textbf{Основные операции:}
+\begin{itemize}
+    \item \texttt{mm.insert(\{key, value\})} --- вставка нового элемента (даже если такой ключ уже есть) ($O(\log n)$);
+    \item \texttt{mm.find(key)} --- итератор на \emph{первый} элемент с данным ключом ($O(\log n)$);
+    \item \texttt{mm.count(key)} --- количество элементов с таким ключом ($O(\log n)$);
+    \item \texttt{mm.equal\_range(key)} --- пара итераторов на диапазон элементов с данным ключом ($O(\log n)$);
+    \item \texttt{mm.erase(key)} --- удаляет все элементы с данным ключом ($O(\log n)$).
+\end{itemize}
+
+\textbf{Пример: несколько значений для одного ключа.}
+
+\begin{lstlisting}
+#include <map>
+#include <iostream>
+
+int main() {
+    std::multimap<std::string, int> mm;
+
+    mm.insert({"apple", 1});
+    mm.insert({"apple", 2});
+
+    auto range = mm.equal_range("apple");
+    for (auto it = range.first; it != range.second; ++it) {
+        std::cout << it->first << " = " << it->second << "\n";
+    }
+}
+\end{lstlisting}
+
+
+\subsection{std::set}
+
+\texttt{std::set} --- отсортированное множество уникальных элементов (только ключи, без значений).
+
+\textbf{Свойства:}
+\begin{itemize}
+    \item хранит только ключи (без отдельного значения);
+    \item элементы уникальны;
+    \item хранятся в отсортированном виде;
+    \item основные операции: $O(\log n)$.
+\end{itemize}
+
+\textbf{Основные операции:}
+\begin{itemize}
+    \item \texttt{s.insert(x)} --- вставка элемента, если его еще нет ($O(\log n)$);
+    \item \texttt{s.erase(x)} --- удаление по значению ($O(\log n)$);
+    \item \texttt{s.find(x)} --- поиск элемента ($O(\log n)$);
+    \item \texttt{s.count(x)} --- возвращает 0 или 1 (элементы уникальны) ($O(\log n)$);
+    \item \texttt{s.lower\_bound(x)} --- первый элемент, не меньший \texttt{x} ($O(\log n)$);
+    \item \texttt{s.upper\_bound(x)} --- первый элемент, строго больший \texttt{x} ($O(\log n)$).
+\end{itemize}
+
+\textbf{Пример: повторная вставка не добавляет элемент.}
+
+\begin{lstlisting}
+#include <set>
+#include <iostream>
+
+int main() {
+    std::set<int> s;
+
+    s.insert(5);
+    s.insert(5); // второй раз 5 не добавится
+
+    std::cout << s.size(); // 1
+}
+\end{lstlisting}
+
+
+\subsection{std::multiset}
+
+\texttt{std::multiset} --- отсортированное множество, в котором допускаются дубликаты.
+
+\textbf{Свойства:}
+\begin{itemize}
+    \item элементы не обязаны быть уникальными;
+    \item элементы хранятся в отсортированном виде;
+    \item основные операции: $O(\log n)$.
+\end{itemize}
+
+\textbf{Основные операции:}
+\begin{itemize}
+    \item \texttt{ms.insert(x)} --- вставка элемента (даже если такой уже есть) ($O(\log n)$);
+    \item \texttt{ms.erase(x)} --- удаляет все элементы с таким значением ($O(\log n)$);
+    \item \texttt{ms.find(x)} --- итератор на один из элементов со значением \texttt{x} ($O(\log n)$);
+    \item \texttt{ms.count(x)} --- количество элементов со значением \texttt{x} ($O(\log n)$);
+    \item \texttt{ms.lower\_bound(x)}, \texttt{ms.upper\_bound(x)} --- границы диапазона для значения \texttt{x}.
+\end{itemize}
+
+\textbf{Пример: одинаковые элементы хранятся несколько раз.}
+
+\begin{lstlisting}
+#include <set>
+#include <iostream>
+
+int main() {
+    std::multiset<int> ms;
+
+    ms.insert(5);
+    ms.insert(5);
+
+    std::cout << ms.size();   // 2
+    std::cout << ms.count(5); // 2
+}
+\end{lstlisting}
+
+
+\subsection{unordered\_map и unordered\_set}
+
+\texttt{unordered\_map} и \texttt{unordered\_set} реализованы через хеш-таблицы.
+
+\textbf{Свойства:}
+\begin{itemize}
+    \item элементы не упорядочены (никакого сортированного обхода);
+    \item используются хеш-функции для доступа по ключу;
+    \item ключи (или элементы) уникальны;
+    \item амортизированная сложность основных операций: $O(1)$, в худшем случае --- $O(n)$.
+\end{itemize}
+
+\textbf{Основные операции для \texttt{unordered\_map}:}
+\begin{itemize}
+    \item \texttt{um[key]} --- доступ/вставка по ключу (амортизированно $O(1)$);
+    \item \texttt{um.at(key)} --- доступ с проверкой, бросает исключение, если ключа нет;
+    \item \texttt{um.insert(\{key, value\})} --- вставка, если ключа еще нет;
+    \item \texttt{um.find(key)} --- поиск по ключу (амортизированно $O(1)$);
+    \item \texttt{um.erase(key)} --- удаление по ключу.
+\end{itemize}
+
+\textbf{Пример: \texttt{unordered\_map}.}
+
+\begin{lstlisting}
+#include <unordered_map>
+#include <iostream>
+
+int main() {
+    std::unordered_map<std::string, int> um;
+
+    um["apple"] = 10;
+    um["banana"] = 20;
+
+    std::cout << um["apple"];
+}
+\end{lstlisting}
+
+\textbf{Основные операции для \texttt{unordered\_set}:}
+\begin{itemize}
+    \item \texttt{us.insert(x)} --- вставка элемента ($O(1)$ в среднем);
+    \item \texttt{us.erase(x)} --- удаление по значению;
+    \item \texttt{us.find(x)} --- поиск элемента;
+    \item \texttt{us.count(x)} --- 0 или 1 (элементы уникальны).
+\end{itemize}
+
+\textbf{Пример: \texttt{unordered\_set}.}
+
+\begin{lstlisting}
+#include <unordered_set>
+#include <iostream>
+
+int main() {
+    std::unordered_set<int> us;
+
+    us.insert(3);
+    us.insert(3);
+
+    std::cout << us.size(); // 1
+}
+\end{lstlisting}
+
+\end{document}
